@@ -4,3 +4,5 @@ venv/
 secret_debug.env
 debug
 .idea
+.DS_Store
+__pycache__/
