@@ -1,5 +1,4 @@
 import os
-from shutil import rmtree
 
 from dotenv import load_dotenv
 import supervisely as sly

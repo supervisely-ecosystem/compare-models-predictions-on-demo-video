@@ -33,7 +33,8 @@ def create_video_from_images(frames, path, out_size):
     video_writer = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*"MP4V"), 0.5, out_size)
 
     for i in range(len(frames) - 1):
-        video_writer.write(frames[i])
+        frame_bgr = cv2.cvtColor(frames[i], cv2.COLOR_RGB2BGR)
+        video_writer.write(frame_bgr)
     video_writer.release()
 
 
