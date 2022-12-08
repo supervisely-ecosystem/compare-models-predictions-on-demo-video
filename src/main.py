@@ -7,6 +7,7 @@ import supervisely as sly
 import functions as f
 import globals as g
 
+#TODO: save project name on grid on top of image (bottom center)
 
 project_ids = list(map(int, os.environ["CONTEXT_PROJECTID"].split(",")))
 DATA_DIR = sly.app.get_data_dir()
