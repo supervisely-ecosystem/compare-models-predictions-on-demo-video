@@ -3,6 +3,7 @@ import os
 from shutil import rmtree
 
 import cv2
+import supervisely as sly
 
 import functions as f
 import stats as s
@@ -12,9 +13,17 @@ import stats as s
 ###############################################################
 project_ids = list(map(int, os.environ["CONTEXT_PROJECTID"].split(",")))
 
+src_meta = []
 src_datasets = defaultdict(list)
-all_projects_gen = (s.api.dataset.get_list(id) for id in project_ids)
-for ds_list in all_projects_gen:
+all_projects_datasets = []
+
+for id in project_ids:
+    meta_json = s.api.project.get_meta(id)
+    meta = sly.ProjectMeta.from_json(meta_json)
+    src_meta.append(meta)
+    all_projects_datasets.append(s.api.dataset.get_list(id))
+
+for ds_list in all_projects_datasets:
     for ds in ds_list:
         src_datasets[ds.name].append(ds)
 #################################################################
@@ -25,7 +34,8 @@ try:
 except Exception:
     raise ValueError("Error: current datasets have different structures")
 
-for ds_name, dss in src_datasets.items():
+for i, (ds_name, dss) in enumerate(src_datasets.items()):
+    print(f"Loading images and annotations from {ds_name} datasets...")
     os.mkdir(s.TEMP_PATH + "results")
     RESULT_PATH = os.path.join(s.TEMP_PATH, "results/")
     result_path = f"{RESULT_PATH}merged.mp4"  # result video path
@@ -37,20 +47,30 @@ for ds_name, dss in src_datasets.items():
         os.mkdir(s.SOURCE_PATH + f"{ds_name}/")
 
     for ds_num, ds in enumerate(dss):
+        # collecting image paths, ids
         ds_images = s.api.image.get_list(ds.id)
-        images_id = []
+        images_ids = []
         images_path = []
+        images_ann = []
 
         for num, img in enumerate(ds_images):
-            images_id.append(img.id)
+            images_ids.append(img.id)
             if str(num) not in os.listdir(ds_path):
                 os.mkdir(ds_path + f"/{num}")
             img_path = os.path.join(ds_path, str(num), f"{ds_num}-{img.name}")
             images_path.append(img_path)
 
-        s.api.image.download_paths(ds.id, images_id, images_path)  # download dataset images
-        
+        # downloading all images and their annotations
+        images_ann_json = s.api.annotation.download_batch(ds.id, images_ids)
+        images_ann = [
+            sly.Annotation.from_json(ann.annotation, src_meta[i]) for ann in images_ann_json
+        ]
+        s.api.image.download_paths(ds.id, images_ids, images_path)  # download dataset images
+
+        # resize and annotate images before merging
         orig = [cv2.imread(path) for path in images_path]
+        for j in range(len(orig)):
+            images_ann[j].draw_pretty(orig[j], thickness=3)
         small = [cv2.resize(img, dsize=(0, 0), fx=0.5, fy=0.5) for img in orig]
         images_mat.append(small)
 

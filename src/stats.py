@@ -11,7 +11,6 @@ load_dotenv(os.path.expanduser("~/supervisely/.env"))
 
 api = sly.Api.from_env()
 
-FRAME_RATE = os.environ["FRAME_RATE"]
 workspace_id = os.environ["WORKSPACE_ID"]
 
 workspace = api.workspace.get_info_by_id(workspace_id)
