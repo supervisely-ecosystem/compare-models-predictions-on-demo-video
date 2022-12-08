@@ -5,17 +5,6 @@ import cv2
 import numpy as np
 
 
-def check_datasets(datasets):
-    # check projects have same count and name of datasets
-    for dss in datasets.values():
-        check1 = all(len(i) == len(dss[0]) for i in dss)
-        check2 = all(i.name == dss[0].name for i in dss)
-        check3 = all(i.images_count == dss[0].images_count for i in dss)
-        if not check1 == check2 == check3 == True:
-            return False
-    return True
-
-
 def get_grid_size(num: int = 1) -> tuple:
     # get num of cols andd rows in result grid
     cols = max(int(np.ceil(np.sqrt(num))), 1)
@@ -40,16 +29,11 @@ def create_image_grid(images, grid_size):
     return grid
 
 
-def create_video_from_images(images_mat, result_path, grid_size=1):
-    zipped_images = zip(*images_mat)
-    first_frame = create_image_grid(next(zipped_images), grid_size)
-    out_size = first_frame.shape[0:2][::-1]
-    video_writer = cv2.VideoWriter(result_path, cv2.VideoWriter_fourcc(*"MP4V"), 0.5, out_size)
-    video_writer.write(first_frame)
+def create_video_from_images(frames, path, out_size):
+    video_writer = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*"MP4V"), 0.5, out_size)
 
-    for i in range(len(images_mat[0]) - 1):
-        frame = create_image_grid(next(zipped_images), grid_size)
-        video_writer.write(frame)
+    for i in range(len(frames) - 1):
+        video_writer.write(frames[i])
     video_writer.release()
 
 
