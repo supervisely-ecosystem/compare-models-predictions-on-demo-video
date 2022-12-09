@@ -41,7 +41,7 @@ f_project_id, f_project = next(iter(all_projects))  # take the first project for
 
 
 # iterate over datasets, images, merge images to frames and write video fo each dataset
-for ds_num, (ds_name, dataset) in enumerate(f_project["datasets"].items()):
+for ds_name, dataset in f_project["datasets"].items():
 
     ds_path = os.path.join(DATA_DIR, ds_name)
     if ds_name not in os.listdir(DATA_DIR):
@@ -53,8 +53,9 @@ for ds_num, (ds_name, dataset) in enumerate(f_project["datasets"].items()):
 
     # create new videowriter for current dataset
     videopath = ds_path + f"/{ds_name}.mp4"
+    fourcc = cv2.VideoWriter_fourcc(*"MP4V")
     height, width = f_img_shape[:2]
-    video_writer = cv2.VideoWriter(videopath, cv2.VideoWriter_fourcc(*"MP4V"), 0.5, (width, height))
+    video_writer = cv2.VideoWriter(videopath, fourcc, 0.5, (width, height))
 
     #  check that the name of current dataset exists in all projects
     all_ds_names = [p["datasets"].keys() for pid, p in all_projects]
