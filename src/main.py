@@ -37,9 +37,8 @@ for id in project_ids:
 
 
 # take the first project and check
-first_project = next(iter(src_projects_data.values()))
 all_projects = src_projects_data.values()
-first_project = all_projects[0]
+first_project = next(iter(all_projects))
 
 
 # check datasets, images and merge images to frames
@@ -71,7 +70,7 @@ for ds_num, (ds_name, dataset) in enumerate(first_project["datasets"].items()):
         temp_ann = []
         project_meta = []
 
-        for pid, project in src_projects_data.items():
+        for project in all_projects:
 
             img_id = project["datasets"][ds_name]["images"][image_info.name].id
 
