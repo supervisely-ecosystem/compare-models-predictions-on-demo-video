@@ -2,18 +2,18 @@ from collections import defaultdict
 import os
 from shutil import rmtree
 
+import cv2
+import imgaug.augmenters as iaa
 import supervisely as sly
 
 import functions as f
 import globals as g
 
-#TODO: save project name on grid on top of image (bottom center)
+# TODO: save project name on grid on top of image (bottom center)
 
 project_ids = list(map(int, os.environ["CONTEXT_PROJECTID"].split(",")))
 DATA_DIR = sly.app.get_data_dir()
 src_projects_data = defaultdict(dict)
-correct_datasets = []
-result_paths = defaultdict(list)
 
 
 # collect all projects data
@@ -37,65 +37,81 @@ for id in project_ids:
 
 
 # take the first project and check
-f_key, f_project = next(iter(src_projects_data.items()))
+first_project = next(iter(src_projects_data.values()))
+all_projects = src_projects_data.values()
+first_project = all_projects[0]
 
 
 # check datasets, images and merge images to frames
-for ds_name, dataset in f_project["datasets"].items():
-    FRAMES = []
+for ds_num, (ds_name, dataset) in enumerate(first_project["datasets"].items()):
+    FRAMES = 0
 
-    if not all(ds_name in p["datasets"].keys() for p in src_projects_data.values()):
+    ds_path = os.path.join(DATA_DIR, ds_name)
+    if ds_name not in os.listdir(DATA_DIR):
+        os.mkdir(ds_path)
+
+    # nested list of all dataset`s names for all projects
+    all_ds_names = [p["datasets"].keys() for p in all_projects]
+
+    if not all(ds_name in p for p in all_ds_names):
+        # skip this dataset if it`s name not in all projects
         continue
-    for img_name, image_info in dataset["images"].items():
-        if not all(
-            img_name in p["datasets"][ds_name]["images"].keys() for p in src_projects_data.values()
-        ):
-            continue
-        temp_ann = []  # clean after each frame merging
-        temp_imgs = []
 
+    for img_name, image_info in dataset["images"].items():
+
+        # nested list of all image name for all datasets with same name
+        all_img_names = [p["datasets"][ds_name]["images"].keys() for p in all_projects]
+
+        if not all(img_name in d for d in all_img_names):
+            # skip this image if it`s name not in all datasets with same name
+            continue
+
+        # temp lists for current frame
+        temp_imgs = []
+        temp_ann = []
         project_meta = []
+
         for pid, project in src_projects_data.items():
 
             img_id = project["datasets"][ds_name]["images"][image_info.name].id
 
-            temp_ann.append(g.api.annotation.download(img_id))
+            ann_json = g.api.annotation.download(img_id)
+            project_meta = project["meta"]
+            ann = sly.Annotation.from_json(ann_json.annotation, project_meta)
+
             img = g.api.image.download_np(img_id)
+            ann.draw_pretty(img, thickness=3)
             temp_imgs.append(img)
-            project_meta.append(project["meta"])
 
-            if len(temp_imgs) == len(src_projects_data.values()):
-                images_ann = [
-                    sly.Annotation.from_json(temp_ann[i].annotation, project_meta[i])
-                    for i in range(len(temp_ann))
-                ]
-                for i in range(len(temp_imgs)):
-                    images_ann[i].draw_pretty(temp_imgs[i], thickness=3)
+        grid_size = f.get_grid_size(len(temp_imgs))
+        frame = f.create_image_grid(temp_imgs, grid_size=grid_size)
 
-                grid_size = f.get_grid_size(len(temp_imgs))
-                frame = f.create_image_grid(temp_imgs, grid_size=grid_size)
-                FRAMES.append(frame)
+        # create new videowriter if its the first frame in dataset
+        if FRAMES == 0:
+            height, width = frame.shape[:2]
+            out_size = (width, height)
+            videopath = ds_path + f"/{ds_name}.mp4"
 
-    correct_datasets.append(dataset["info"].name)
+            video_writer = cv2.VideoWriter(
+                videopath, cv2.VideoWriter_fourcc(*"MP4V"), 0.5, out_size
+            )
 
+        # resize current frame if it differs from first video frame
+        if frame.shape[0] > height:
+            resize_aug = iaa.Resize({"height": height, "width": "keep-aspect-ratio"})
+            frame = resize_aug(image=frame.copy())
 
-RESULT_PATH = os.path.join(DATA_DIR, "result/")
-if "result" not in os.listdir(DATA_DIR):
-    os.mkdir(RESULT_PATH)
+        if frame.shape[1] > width:
+            resize_aug = iaa.Resize({"height": height, "width": "keep-aspect-ratio"})
+            frame = resize_aug(image=frame.copy())
 
-# create videos and datasets, upload videos
-for ds_name in correct_datasets:
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        video_writer.write(frame_bgr)
+        FRAMES += 1
 
-    out_size = FRAMES[0].shape[0:2][::-1]
-    cur_path = os.path.join(RESULT_PATH, ds_name)
-
-    if ds_name not in os.listdir(RESULT_PATH):
-        os.mkdir(cur_path)
-
-    f.create_video_from_images(FRAMES, cur_path + f"/{ds_name}.mp4", out_size)
-
-    f.create_dataset_and_upload_result(g.api, g.project.id, f"{cur_path}/")
-
+    video_writer.release()
+    f.create_dataset_and_upload_result(g.api, g.project.id, ds_path)
+    rmtree(ds_path)
 
 rmtree(DATA_DIR)
 print("finish")

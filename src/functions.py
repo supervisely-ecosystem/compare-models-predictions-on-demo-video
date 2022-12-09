@@ -46,9 +46,8 @@ def create_dataset_and_upload_result(api, project_id, path):
     print(f"Dataset (id={dataset.id}) has been sucessfully created in project (id={project_id})")
 
     #  upload result video
-    video_path = glob.glob(path + r"*.mp4")[0]
+    video_path = glob.glob(path + r"/*.mp4")[0]
     video_info = api.video.upload_path(dataset.id, name="Video", path=video_path)
-    rmtree(path)
 
     # return video info
     return video_info
