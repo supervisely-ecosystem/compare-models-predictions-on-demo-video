@@ -1,8 +1,8 @@
 import glob
-from shutil import rmtree
 
 import cv2
 import numpy as np
+import supervisely as sly
 
 
 def get_grid_size(num: int = 1) -> tuple:
@@ -51,3 +51,28 @@ def create_dataset_and_upload_result(api, project_id, path):
 
     # return video info
     return video_info
+
+
+def get_readable_font_size(img_size):
+    # return: size of font
+    minimal_font_size = 6
+    base_font_size = 14
+    base_image_size = 512
+    return max(
+        minimal_font_size,
+        round(base_font_size * (img_size[0] + img_size[1]) // 2) // base_image_size,
+    )
+
+
+def draw_text(img, pid):
+    img_height, img_width = img.shape[:2]
+
+    font_size = get_readable_font_size((img_width, img_height))
+    font = sly.image.get_font(font_file_name=None, font_size=font_size)
+    t_width, t_height = font.getsize(pid)
+    x = int(img_width // 2 - t_width // 2)
+    y = img_height - t_height * 1.5
+
+    sly.image.draw_text(img, pid, (y, x), font=font)
+
+    return img
