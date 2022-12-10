@@ -3,6 +3,7 @@ import glob
 import cv2
 import numpy as np
 import supervisely as sly
+from supervisely.imaging.font import get_readable_font_size
 
 
 def get_grid_size(num: int = 1) -> tuple:
@@ -29,13 +30,42 @@ def create_image_grid(images, grid_size):
     return grid
 
 
-def create_video_from_images(frames, path, out_size):
-    video_writer = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*"MP4V"), 0.5, out_size)
+def check_and_resize_image(image, dim):
+    # check if the width and height is specified
+    if dim[:2] == image.shape[:2]:
+        return image
 
-    for i in range(len(frames) - 1):
-        frame_bgr = cv2.cvtColor(frames[i], cv2.COLOR_RGB2BGR)
-        video_writer.write(frame_bgr)
-    video_writer.release()
+    dim_h, dim_w = dim[:2]
+    img_h, img_w = image.shape[:2]
+    resized_img = np.zeros((dim_h, dim_w, 3), dtype=np.uint8)
+
+    ratio_h = dim_h / img_h
+    ratio_w = dim_w / img_w
+
+    new_size = (0, 0)
+    if img_h / dim_h > img_w / dim_w:
+        new_size = (int(img_w * ratio_h), dim_h)
+    else:
+        new_size = (dim_w, int(img_h * ratio_w))
+    new_img = cv2.resize(image, new_size)
+    img_h, img_w = new_img.shape[:2]
+    x = (dim_w - img_w) // 2
+    y = (dim_h - img_h) // 2
+    resized_img[y : y + img_h, x : x + img_w, ...] = new_img
+    return resized_img
+
+
+def draw_text(img, pid):
+    img_h, img_w = img.shape[:2]
+    font_size = get_readable_font_size((img_w, img_h))
+    font = sly.image.get_font(font_file_name=None, font_size=font_size)
+    t_width, t_height = font.getsize(pid)
+    x = int(img_w // 2 - t_width // 2)
+    y = img_h - t_height * 1.5
+
+    sly.image.draw_text(img, pid, (y, x), font=font)
+
+    return img
 
 
 def create_dataset_and_upload_result(api, project_id, path):
@@ -48,31 +78,7 @@ def create_dataset_and_upload_result(api, project_id, path):
     #  upload result video
     video_path = glob.glob(path + r"/*.mp4")[0]
     video_info = api.video.upload_path(dataset.id, name="Video", path=video_path)
+    print(f"video (id={video_info[0]}) uploaded to the new dataset (id={dataset.id})")
 
     # return video info
     return video_info
-
-
-def get_readable_font_size(img_size):
-    # return: size of font
-    minimal_font_size = 6
-    base_font_size = 14
-    base_image_size = 512
-    return max(
-        minimal_font_size,
-        round(base_font_size * (img_size[0] + img_size[1]) // 2) // base_image_size,
-    )
-
-
-def draw_text(img, pid):
-    img_height, img_width = img.shape[:2]
-
-    font_size = get_readable_font_size((img_width, img_height))
-    font = sly.image.get_font(font_file_name=None, font_size=font_size)
-    t_width, t_height = font.getsize(pid)
-    x = int(img_width // 2 - t_width // 2)
-    y = img_height - t_height * 1.5
-
-    sly.image.draw_text(img, pid, (y, x), font=font)
-
-    return img
