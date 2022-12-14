@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 
 from dotenv import load_dotenv
@@ -7,16 +8,18 @@ if sly.is_development():
     load_dotenv("local.env")
     load_dotenv(os.path.expanduser("~/supervisely.env"))
 
+WORKSPACE_ID = os.environ["context.workspaceId"]
+label_opacity = int(os.environ["modal.state.opacity"])
+border_thickness = int(os.environ["modal.state.thickness"])
 
-api = sly.Api.from_env()
+api = sly.Api()
 
-workspace_id = os.environ["WORKSPACE_ID"]
+workspace = api.workspace.get_info_by_id(WORKSPACE_ID)
 
-workspace = api.workspace.get_info_by_id(workspace_id)
 if workspace is None:
     print("you should put correct workspaceId value to local.env")
-    raise ValueError(f"Workspace with id={workspace_id} not found")
+    raise ValueError(f"Workspace with id={WORKSPACE_ID} not found")
 
-project = api.project.create(
-    workspace_id, "compare predictions", sly.ProjectType.VIDEOS, change_name_if_conflict=True
-)
+TEAM_ID = api.team.get_info_by_id(workspace.team_id)
+
+src_projects_data = defaultdict(dict)
