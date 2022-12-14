@@ -2,8 +2,8 @@ from collections import defaultdict
 
 import pandas as pd
 import supervisely as sly
-from supervisely.app.widgets import Button, Card, Container, Input, LabeledImage
-from supervisely.app.widgets import Progress, SelectProject, Table
+from supervisely.app.widgets import Button, Card, Container, Field, Flexbox, InputNumber
+from supervisely.app.widgets import LabeledImage, Progress, SelectProject, Table
 from supervisely.project.project_type import ProjectType
 
 
@@ -12,16 +12,18 @@ import src.ui.output as output
 
 
 # 1 input info
-select = SelectProject(workspace_id=g.workspace.id, allowed_types=[ProjectType.IMAGES])
+select = SelectProject(
+    workspace_id=g.workspace.id, compact=True, allowed_types=[ProjectType.IMAGES]
+)
 button_add_project = Button(text="Add project", icon="zmdi zmdi-plus")
 input_progress = Progress()
 
 start_card = Card(
-    title="Collect data from projects",
-    description="1️⃣👇 Press start to collect data from projects",
+    title="Select projects",
+    description="1️⃣👇 Add projects to the table",
     content=Container([select, button_add_project, input_progress]),
 )
-
+# TODO: description
 
 # 2,3  explore info and preview example frame of future videos
 table = Table(fixed_cols=1, width="100%")
@@ -33,22 +35,23 @@ table_card = Card(
 )
 table_card.lock()
 
-frame = LabeledImage(
-    annotations_opacity=0.5, show_opacity_slider=False, border_width=3, enable_zoom=False
-)
+frame = LabeledImage()
 refresh_button = Button(text="Refresh preview", icon="zmdi zmdi-refresh", button_size="small")
-input_opacity = Input(placeholder="40 (opacity, %)", size="small", maxlength=3)
-input_border = Input(placeholder="4 (border width)", size="small", maxlength=2)
-preview_container = Container(
-    [input_opacity, input_border, refresh_button],
-    direction="horizontal",
-    fractions=[18, 22, 60],
-)
+refresh_container = Container([refresh_button])
+
+
+input_opacity = InputNumber(value=40, min=0, max=100)
+input_border = InputNumber(value=4, min=0, max=20)
+
+opacity_field = Field(content=input_opacity, title="Opacity")
+border_field = Field(content=input_border, title="Border width")
+
+preview_settings = Flexbox([opacity_field, border_field])
 
 preview_card = Card(
     title="Image preview",
     description="3️⃣👇 Preview video`s frame",
-    content=Container([preview_container, frame]),
+    content=Container([preview_settings, refresh_container, frame]),
     lock_message="Add projects to unlock",
 )
 preview_card.lock()
@@ -80,7 +83,7 @@ def collect_data():
 
 @table.click
 def remove_project(datapoint: Table.ClickedDataPoint):
-    if datapoint.button_name is None:
+    if datapoint.button_name is None or frame.loading:
         return
     table.loading = True
     refresh_button.disable()
@@ -100,16 +103,15 @@ def remove_project(datapoint: Table.ClickedDataPoint):
 
 @refresh_button.click
 def refresh_preview():
-    table_card.lock()
-    output.button_render.disable()
-    opacity = check_field(input_opacity, 0, 100, 40)
-    thickness = check_field(input_border, 0, 20, 4)
-
-    details = (opacity, thickness)
+    # table_card.lock()
     frame.loading = True
+    output.button_render.disable()
+    opacity = input_opacity.get_value()
+    border = input_border.get_value()
+    details = (opacity, border)
     file_info = output.preview_frame(details)
     frame.set(title="Preview of result video frame", image_url=file_info.full_storage_url)
-    table_card.unlock()
+    # table_card.unlock()
     output.button_render.enable()
     frame.loading = False
 
@@ -149,18 +151,3 @@ def get_table_data():
     ]
     df = pd.DataFrame(rows, columns=table_columns)
     return df
-
-
-def check_field(field, min, max, default):
-    if field.get_value() == "":
-        field.set_value(default)
-    num = field.get_value()
-    if type(field.get_value()) == str:
-        num = int(num)
-    if num < min:
-        field.set_value(min)
-        num = min
-    if num > max:
-        field.set_value(max)
-        num = max
-    return num

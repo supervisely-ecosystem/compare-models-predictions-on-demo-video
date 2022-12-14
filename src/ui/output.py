@@ -1,29 +1,72 @@
 import glob
 import os
 import random
-import re
 from shutil import rmtree
 
 import cv2
 import numpy as np
 import supervisely as sly
 from supervisely.imaging.font import get_readable_font_size
-from supervisely.app.widgets import Button, Card, Container, Checkbox, Input
-from supervisely.app.widgets import NotificationBox, Progress, VideoThumbnail
+from supervisely.app.widgets import (
+    Button,
+    Card,
+    Container,
+    Checkbox,
+    Field,
+    Flexbox,
+    Input,
+    InputNumber,
+)
+from supervisely.app.widgets import NotificationBox, Progress, Select, VideoThumbnail
 
 import src.globals as g
 import src.ui.input as input
 
 
 # 4 start render result video
-input_text = Input(placeholder="Enter the project name")
-input_frames = Input(
-    placeholder="Enter number or percents to limit count of frames (default: 100%)"
+input_frames = InputNumber(value=6, min=1, max=6)
+input_frames_percents = InputNumber(value=100, min=1, max=100)
+input_frames_percents.hide()
+
+limits_types = [
+    Select.Item(value="frames", label="frames"),
+    Select.Item(value="percents", label="percents"),
+]
+select_frame_type = Select(items=limits_types)
+
+frame_flex = Flexbox([select_frame_type, input_frames, input_frames_percents])
+frames_field = Field(
+    content=frame_flex,
+    title="Sample frame count",
+    description="Enter a number or percentage if you want to get a sample",
 )
-input_fps = Input(placeholder="Enter fps of result videos (default: 5 fps)", maxlength=4)
-is_random = Checkbox(content="Enable/disable random order of frames")
+
+input_fps = InputNumber(value=5, min=0.1, max=400)
+fps_field = Field(content=input_fps, title="fps", description="Set the number of frames per second")
+
+is_random = Checkbox(content="")
+random_field = Field(
+    content=is_random,
+    title="Random order of frames",
+    description="Enable checkbox if you want to get a random frames",
+)
+
+render_settings = Field(
+    content=Container([frames_field, random_field, fps_field]),
+    title="Render Settings",
+    description="Configuring the resulting video",
+)
+
+input_project_name = Input(placeholder="Enter the project name")
+name_field = Field(
+    content=input_project_name,
+    title="Project name",
+    description="Enter the destination project name",
+)
+
 button_render = Button(text="Start render")
-output_container = Container([input_text, input_frames, input_fps, is_random, button_render])
+settings_container = Container([render_settings, name_field, button_render])
+
 
 ds_progress = Progress()
 render_progress = Progress()
@@ -38,10 +81,22 @@ output_video.hide()
 result_card = Card(
     title="Render video",
     description="4️⃣👇 Create new project and start rendering the video",
-    content=Container([output_container, render_progress, ds_progress, info_success, output_video]),
+    content=Container(
+        [settings_container, render_progress, ds_progress, info_success, output_video]
+    ),
     lock_message="Add projects to unlock",
 )
 result_card.lock()
+
+
+@select_frame_type.value_changed
+def show_frames_input(value):
+    if value == "percents":
+        input_frames_percents.show()
+        input_frames.hide()
+    else:
+        input_frames.show()
+        input_frames_percents.hide()
 
 
 @button_render.click
@@ -51,70 +106,47 @@ def create_project_and_upload_videos():
     info_success.hide()
     output_video.hide()
 
-    project_name = input_text.get_value()
-    frames_count = check_frames_count(input_frames.get_value())
-    fps = check_fps(input_fps, 0, 400, 5)
-    opacity = input.check_field(input.input_opacity, 0, 100, 40)
-    thickness = input.check_field(input.input_border, 0, 20, 4)
+    project_name = input_project_name.get_value()
+    fps = input_fps.get_value()
+    frames_count = get_frames_count()
+    opacity = input.input_opacity.get_value()
+    thickness = input.input_border.get_value()
     random = is_random.is_checked()
 
-    input_text.disable()
+    input_project_name.disable()
     if project_name == "":
         sly.app.show_dialog(
             title="Enter project name please",
             description="Please enter name to create a new project",
-            status="warning",
+            status="error",
         )
-        input_text.enable()
+        input_project_name.enable()
     else:
         details = (fps, opacity, thickness)
         video_info, _ = start_render_and_upload_to_new_project(
             project_name, details, frames_count, random
         )
-        input_text.set_value("")
+        input_project_name.set_value("")
         info_success.show()
         output_video.set_video_id(video_info.id)
         output_video.show()
-        input_text.enable()
+        input_project_name.enable()
         input.table_card.unlock()
     input.button_add_project.enable()
 
 
-def check_frames_count(value):
-    if value != "":
-        pattern_perc = r"^(?P<percentage>(100|(\d{1,2})))\%$"
-        percent_match = re.search(pattern_perc, value)
-        pattern_num = r"^\d*$"
-        num_match = re.search(pattern_num, value)
+def get_frames_count():
+    frames_count = None
+    if select_frame_type.get_value() == "percents":
         project = next(iter(g.src_projects_data.values()))
         dataset = next(iter(project["datasets"].values()))
         all_frames = len(dataset["images"])
-
-        if percent_match:
-            percent = int(percent_match.group("percentage"))
-            num = all_frames * percent // 100
-            print(num)
-            return num
-        if num_match:
-            num = min(int(value), all_frames)
-            return num
-    return None
-
-
-def check_fps(input_fps, min, max, default):
-    num = input_fps.get_value()
-    try:
-        num = float(num)
-    except:
-        input_fps.set_value(default)
-        num = default
-    if num <= min:
-        input_fps.set_value(0.5)
-        num = 0.5
-    if num > max:
-        input_fps.set_value(max)
-        num = max
-    return num
+        frames_count = input_frames_percents.get_value() * all_frames // 100
+        print(all_frames)
+        print(input_frames_percents.get_value())
+    else:
+        frames_count = input_frames.get_value()
+    return frames_count
 
 
 def dataset_is_valid(all_projects, ds_name):
@@ -214,7 +246,7 @@ def create_frame(ds_name, img, f_img_shape, grid_size, all_projects, opacity, th
             ann = sly.Annotation.from_json(ann_json.annotation, project["meta"])
 
             img = g.api.image.download_np(img_id).astype("uint8")
-            ann.draw_pretty(img, thickness=thickness, opacity=opacity / 100)
+            ann.draw_pretty(img, thickness=thickness, opacity=(opacity / 100))
             if img.shape[:2] != f_img_shape[:2]:
                 img = check_and_resize_image(img, f_img_shape[:2])
 
