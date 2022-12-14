@@ -23,7 +23,6 @@ start_card = Card(
     description="1️⃣👇 Add projects to the table",
     content=Container([select, button_add_project, input_progress]),
 )
-# TODO: description
 
 # 2,3  explore info and preview example frame of future videos
 table = Table(fixed_cols=1, width="100%")
