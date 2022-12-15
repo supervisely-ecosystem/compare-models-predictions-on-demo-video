@@ -1,0 +1,23 @@
+{
+  "type": "app",
+  "version": "2.0.0",
+  "name": "Compare model predictions on demo video",
+  "description": "Create video to compare datasets in multiple projects",
+  "categories": [
+    "videos",
+    "visualization",
+    "exploration",
+    "visualization stats"
+  ],
+  "modal_template_state": {
+    "opacity": 50,
+    "thickness": 4
+  },
+  "entrypoint": "python -m uvicorn src.main:app --host 0.0.0.0 --port 8000",
+  "port": 8000,
+  "context_menu": {
+    "target": ["images_project"],
+    "context_root": "Report"
+  },
+  "min_instance_version": "6.6.6"
+}

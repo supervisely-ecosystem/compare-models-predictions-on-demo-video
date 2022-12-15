@@ -12,16 +12,16 @@ import src.ui.output as output
 
 
 # 1 input info
-select = SelectProject(
+select_project = SelectProject(
     workspace_id=g.workspace.id, compact=True, allowed_types=[ProjectType.IMAGES]
 )
-button_add_project = Button(text="Add project", icon="zmdi zmdi-plus")
+add_project_button = Button(text="Add project", icon="zmdi zmdi-plus")
 input_progress = Progress()
 
 start_card = Card(
     title="Select projects",
     description="1️⃣👇 Add projects to the table",
-    content=Container([select, button_add_project, input_progress]),
+    content=Container([select_project, add_project_button, input_progress]),
 )
 
 # 2,3  explore info and preview example frame of future videos
@@ -34,10 +34,8 @@ table_card = Card(
 )
 table_card.lock()
 
-frame = LabeledImage()
-refresh_button = Button(text="Refresh preview", icon="zmdi zmdi-refresh", button_size="small")
-refresh_container = Container([refresh_button])
-
+preview_image = LabeledImage()
+refresh_button = Button(text="Refresh preview", icon="zmdi zmdi-refresh")
 
 input_opacity = InputNumber(value=40, min=0, max=100)
 input_border = InputNumber(value=4, min=0, max=20)
@@ -50,7 +48,7 @@ preview_settings = Flexbox([opacity_field, border_field])
 preview_card = Card(
     title="Image preview",
     description="3️⃣👇 Preview video`s frame",
-    content=Container([preview_settings, refresh_container, frame]),
+    content=Container([preview_settings, refresh_button, preview_image]),
     lock_message="Add projects to unlock",
 )
 preview_card.lock()
@@ -63,13 +61,15 @@ info = Container(
 )
 
 
-@button_add_project.click
+@add_project_button.click
 def collect_data():
     table.loading = True
     refresh_button.disable()
     output.button_render.disable()
-    collect_project_data(select.get_selected_id())
+
+    collect_project_data(select_project.get_selected_id())
     table.read_pandas(get_table_data())
+
     output.info_success.hide()
     output.output_video.hide()
     table_card.unlock()
@@ -82,37 +82,41 @@ def collect_data():
 
 @table.click
 def remove_project(datapoint: Table.ClickedDataPoint):
-    if datapoint.button_name is None or frame.loading:
+    if datapoint.button_name is None or preview_image.loading:
         return
+
     table.loading = True
     refresh_button.disable()
+    output.info_success.hide()
+    output.output_video.hide()
+
     project_id = datapoint.row["id"]
     del g.src_projects_data[project_id]
     table.read_pandas(get_table_data())
-    output.info_success.hide()
-    output.output_video.hide()
+
     table_data = table.get_json_data()["table_data"]["data"]
     if len(table_data) == 0:
         table_card.lock()
         preview_card.lock()
         output.result_card.lock()
+
     refresh_button.enable()
     table.loading = False
 
 
 @refresh_button.click
 def refresh_preview():
-    # table_card.lock()
-    frame.loading = True
+    preview_image.loading = True
     output.button_render.disable()
+
     opacity = input_opacity.get_value()
     border = input_border.get_value()
     details = (opacity, border)
     file_info = output.preview_frame(details)
-    frame.set(title="Preview of result video frame", image_url=file_info.full_storage_url)
-    # table_card.unlock()
+    preview_image.set(title="Preview of result video frame", image_url=file_info.full_storage_url)
+
     output.button_render.enable()
-    frame.loading = False
+    preview_image.loading = False
 
 
 def collect_project_data(id):
@@ -149,4 +153,5 @@ def get_table_data():
         for project in g.src_projects_data.values()
     ]
     df = pd.DataFrame(rows, columns=table_columns)
+
     return df

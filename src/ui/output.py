@@ -7,17 +7,8 @@ import cv2
 import numpy as np
 import supervisely as sly
 from supervisely.imaging.font import get_readable_font_size
-from supervisely.app.widgets import (
-    Button,
-    Card,
-    Container,
-    Checkbox,
-    Field,
-    Flexbox,
-    Input,
-    InputNumber,
-)
-from supervisely.app.widgets import NotificationBox, Progress, Select, VideoThumbnail
+from supervisely.app.widgets import Button, Card, Container, Checkbox, Field, Flexbox, Input
+from supervisely.app.widgets import InputNumber, NotificationBox, Progress, Select, VideoThumbnail
 
 import src.globals as g
 import src.ui.input as input
@@ -41,7 +32,7 @@ frames_field = Field(
     description="Enter a number or percentage if you want to get a sample",
 )
 
-input_fps = InputNumber(value=5, min=0.1, max=400)
+input_fps = InputNumber(value=4, min=0.1, max=30)
 fps_field = Field(content=input_fps, title="fps", description="Set the number of frames per second")
 
 is_random = Checkbox(content="")
@@ -65,6 +56,7 @@ name_field = Field(
 )
 
 button_render = Button(text="Start render")
+
 settings_container = Container([render_settings, name_field, button_render])
 
 
@@ -101,8 +93,11 @@ def show_frames_input(value):
 
 @button_render.click
 def create_project_and_upload_videos():
-    input.button_add_project.disable()
+    input.add_project_button.disable()
     input.table_card.lock()
+    select_frame_type.disable()
+    input_frames_percents.disable()
+    input_frames.disable()
     info_success.hide()
     output_video.hide()
 
@@ -132,7 +127,11 @@ def create_project_and_upload_videos():
         output_video.show()
         input_project_name.enable()
         input.table_card.unlock()
-    input.button_add_project.enable()
+    input_frames_percents.enable()
+    input_frames.enable()
+
+    select_frame_type.enable()
+    input.add_project_button.enable()
 
 
 def get_frames_count():
@@ -142,8 +141,6 @@ def get_frames_count():
         dataset = next(iter(project["datasets"].values()))
         all_frames = len(dataset["images"])
         frames_count = input_frames_percents.get_value() * all_frames // 100
-        print(all_frames)
-        print(input_frames_percents.get_value())
     else:
         frames_count = input_frames.get_value()
     return frames_count
@@ -184,13 +181,6 @@ def create_image_grid(images, grid_size):
 def get_random_key(all_keys):
     key = random.choice(list(all_keys))
     return key
-
-
-def get_random_image(all_images, choosed_keys):
-    key = random.choice(list(all_images.keys()))
-    if key not in choosed_keys:
-        return key, all_images[key]
-    return get_random_image(all_images, choosed_keys)
 
 
 def check_and_resize_image(image, dim):
@@ -323,8 +313,6 @@ def create_video_for_dataset(
             if frames_count == 0:
                 break
             if is_random is not None:
-                # img_name, img_info = get_random_image(dataset["images"], choosed_keys)
-                # print(img_name)
                 while True:
                     img_name = get_random_key(dataset["images"].keys())
                     img_info = dataset["images"][img_name]
@@ -396,6 +384,8 @@ def start_render_and_upload_to_new_project(project_name, datails, frames_count, 
 
             pbar.update(1)
 
-            rmtree(ds_path)  # clean direcroty with uploaded video
-    rmtree(DATA_DIR)  # clean temp directories
+            # rmtree(ds_path)  # clean direcroty with uploaded video
+            sly.fs.remove_dir(ds_path)  # clean direcroty with uploaded video
+    # rmtree(DATA_DIR)  # clean temp directories
+    sly.fs.clean_dir(DATA_DIR)
     return video_info, project_id
