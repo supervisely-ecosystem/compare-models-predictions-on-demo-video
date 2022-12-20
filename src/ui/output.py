@@ -7,14 +7,7 @@ import numpy as np
 import supervisely as sly
 from supervisely.imaging.font import get_readable_font_size
 from supervisely.app.widgets import Button, Card, Container, Checkbox, Field, Flexbox, Input
-from supervisely.app.widgets import (
-    InputNumber,
-    NotificationBox,
-    Progress,
-    Select,
-    Text,
-    VideoThumbnail,
-)
+from supervisely.app.widgets import InputNumber, Progress, Select, Text, VideoThumbnail
 
 import src.globals as g
 import src.ui.input as input

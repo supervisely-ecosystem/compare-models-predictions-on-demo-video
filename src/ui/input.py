@@ -4,8 +4,8 @@ import cv2
 import os
 import pandas as pd
 import supervisely as sly
-from supervisely.app.widgets import Button, Card, Container, Field, Flexbox, InputNumber
-from supervisely.app.widgets import Image, Progress, SelectProject, Table
+from supervisely.app.widgets import Button, Card, Container, Field, Flexbox, Image
+from supervisely.app.widgets import InputNumber, Progress, SelectProject, Table
 from supervisely.project.project_type import ProjectType
 
 
