@@ -15,7 +15,7 @@ import src.ui.output as output
 
 # 1 input info
 select_project = SelectProject(
-    workspace_id=g.workspace.id, compact=True, allowed_types=[ProjectType.IMAGES]
+    workspace_id=g.WORKSPACE_ID, compact=True, allowed_types=[ProjectType.IMAGES]
 )
 add_project_button = Button(text="Add project", icon="zmdi zmdi-plus")
 input_progress = Progress()
@@ -195,9 +195,9 @@ def save_preview_image(api: sly.Api, frame, img_name):
     local_path = os.path.join(DATA_DIR, img_name)
     remote_path = os.path.join("", img_name)
     sly.image.write(local_path, frame)
-    if api.file.exists(g.TEAM_ID.id, remote_path):
-        api.file.remove(g.TEAM_ID.id, remote_path)
-    file_info = api.file.upload(g.TEAM_ID.id, local_path, remote_path)
+    if api.file.exists(g.TEAM_ID, remote_path):
+        api.file.remove(g.TEAM_ID, remote_path)
+    file_info = api.file.upload(g.TEAM_ID, local_path, remote_path)
     return file_info
 
 
