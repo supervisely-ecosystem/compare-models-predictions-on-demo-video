@@ -14,7 +14,7 @@ import src.ui.input as input
 
 
 # 4 start render result video
-input_frames = InputNumber(value=6, min=1, max=6)
+input_frames = InputNumber(value=6, min=1, max=g.max_frames)
 input_frames_percents = InputNumber(value=100, min=1, max=100)
 input_frames_percents.hide()
 
@@ -63,8 +63,10 @@ settings_container = Container([render_settings, name_field, button_render])
 ds_progress = Progress()
 render_progress = Progress()
 
-info_success = Text(text="Results uploaded to new project", status="success")
+info_success = Text(text="Results uploaded to a new project", status="success")
 info_success.hide()
+info_current = Text(text="The current video uploaded to a new project", status="info")
+info_current.hide()
 
 output_video = VideoThumbnail()
 output_video.hide()
@@ -74,7 +76,7 @@ result_card = Card(
     title="Render Settings",
     description="4️⃣ Configure the resulting video",
     content=Container(
-        [settings_container, render_progress, ds_progress, info_success, output_video]
+        [settings_container, render_progress, ds_progress, info_current, info_success, output_video]
     ),
     lock_message="Add projects to unlock",
 )
@@ -104,8 +106,8 @@ def create_project_and_upload_videos():
     project_name = input_project_name.get_value()
     if project_name == "":
         sly.app.show_dialog(
-            title="Enter project name please",
-            description="Please enter name to create a new project",
+            title="Enter a project name please",
+            description="Please enter a name to create a new project",
             status="error",
         )
         return
@@ -134,9 +136,8 @@ def create_project_and_upload_videos():
         project_name, details, frames_count, random
     )
     input_project_name.set_value("")
+    info_current.hide()
     info_success.show()
-    output_video.set_video_id(video_info.id)
-    output_video.show()
 
     render_loading = False
     select_frame_type.enable()
@@ -283,7 +284,8 @@ def create_video_for_dataset(
     (rows, cols) = grid
     video_size = (width * cols, height * rows)
     video_writer = cv2.VideoWriter(videopath, fourcc, fps, video_size)
-    frames_count = len(dataset["images"]) if frames_count is None else frames_count
+    if frames_count is None or frames_count > dataset["info"].images_count:
+        frames_count = dataset["info"].images_count
 
     with ds_progress(message="processing images...", total=frames_count) as pbar:
         choosed_keys = []
@@ -358,10 +360,14 @@ def start_render_and_upload_to_new_project(project_name, datails, frames_count, 
                 dataset, ds_name, ds_path, all_projects, datails, frames_count, random
             )
             dataset_id = create_dataset(project_id, g.api)
+            info_current.hide()
             video_info = upload_video(dataset_id, g.api, ds_path)
 
+            output_video.set_video_id(video_info.id)
+            output_video.show()
+            info_current.show()
             pbar.update(1)
-            sly.fs.remove_dir(ds_path)  # clean direcroty with uploaded video
+            sly.fs.clean_dir(ds_path)  # clean direcroty with uploaded video
 
     sly.fs.clean_dir(DATA_DIR)  # clean temp directories
     return video_info, project_id

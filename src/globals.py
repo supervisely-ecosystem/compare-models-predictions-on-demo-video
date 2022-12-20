@@ -15,3 +15,5 @@ TEAM_ID = env.team_id()
 WORKSPACE_ID = env.workspace_id()
 
 src_projects_data = defaultdict(dict)
+
+max_frames = 0

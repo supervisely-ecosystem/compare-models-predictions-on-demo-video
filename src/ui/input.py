@@ -3,6 +3,7 @@ from collections import defaultdict
 import cv2
 import os
 import pandas as pd
+import random
 import supervisely as sly
 from supervisely.app.widgets import Button, Card, Container, Field, Flexbox, Image
 from supervisely.app.widgets import InputNumber, Progress, SelectProject, Table
@@ -161,9 +162,10 @@ def collect_project_data(id):
 
         # get project`s all datasets
         project_datasets = g.api.dataset.get_list(id)
+        g.src_projects_data[id]["datasets"] = defaultdict()
+        
         for ds in project_datasets:
             # get dataset`s all imageInfos
-            g.src_projects_data[id]["datasets"] = defaultdict()
             ds_images = g.api.image.get_list(ds.id)
             images = defaultdict(dict)
             for image in ds_images:
@@ -171,6 +173,8 @@ def collect_project_data(id):
                 pbar.update(1)
             ds_data = {"info": ds, "images": images}
             g.src_projects_data[id]["datasets"][ds.name] = ds_data
+            g.max_frames = max(g.max_frames, ds.images_count)
+    output.input_frames.max = g.max_frames
 
 
 def get_table_data():
@@ -210,7 +214,7 @@ def preview_frame(deatails):
     if f_dataset is None:
         f_project = next(iter(all_projects))  # choose next project
         f_dataset = next(iter(f_project["datasets"].values()))
-    f_img_info = next(iter(f_dataset["images"].values()))  # choose first image
+    f_img_info = random.choice(list(f_dataset["images"].values()))  # choose first image
     if f_img_info is None:
         f_dataset = next(iter(f_project["datasets"].values()))  # choose next dataset
         f_img_info = next(iter(f_dataset["images"].values()))
