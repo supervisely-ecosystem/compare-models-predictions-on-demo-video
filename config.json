@@ -1,0 +1,27 @@
+{
+  "type": "app",
+  "version": "2.0.0",
+  "release": { "version": "v1.2.0", "name": "image widget" },
+  "slug": "almaz/compare-models-predictions-on-demo-video",
+  "name": "Compare model predictions on demo video",
+  "description": "Create video to compare datasets in multiple projects",
+  "categories": [
+    "videos",
+    "visualization",
+    "exploration",
+    "visualization stats"
+  ],
+  "modal_template_state": {
+    "opacity": 50,
+    "thickness": 4
+  },
+  "icon": "https://user-images.githubusercontent.com/93247833/208674617-5f3751ea-4321-437f-9f90-b4a590df1172.png",
+  "poster": "https://user-images.githubusercontent.com/93247833/208673169-f6546d31-03b0-47e7-87fa-ef6f90770bfa.png",
+  "entrypoint": "python -m uvicorn src.main:app --host 0.0.0.0 --port 8000",
+  "port": 8000,
+  "context_menu": {
+    "target": ["images_project"],
+    "context_root": "Report"
+  },
+  "min_instance_version": "6.6.6"
+}

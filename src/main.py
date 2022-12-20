@@ -1,9 +1,12 @@
 import os
-from dotenv import load_dotenv
+
 import supervisely as sly
+from supervisely.app.widgets import Container
+
+import src.ui.input as input
+import src.ui.output as output
 
 
+layout = Container(widgets=[input.start_card, input.info, output.result_card], gap=15)
 
-if sly.is_development():
-    load_dotenv("local.env")
-    load_dotenv(os.path.expanduser("~/supervisely.env"))
+app = sly.Application(layout=layout)

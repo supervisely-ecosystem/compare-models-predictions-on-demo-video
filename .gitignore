@@ -4,4 +4,5 @@ venv/
 secret_debug.env
 debug
 .idea
-/src/TEST_DATASET
+.DS_Store
+__pycache__/
