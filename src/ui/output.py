@@ -1,14 +1,20 @@
 import glob
 import os
 import random
-from shutil import rmtree
 
 import cv2
 import numpy as np
 import supervisely as sly
 from supervisely.imaging.font import get_readable_font_size
 from supervisely.app.widgets import Button, Card, Container, Checkbox, Field, Flexbox, Input
-from supervisely.app.widgets import InputNumber, NotificationBox, Progress, Select, VideoThumbnail
+from supervisely.app.widgets import (
+    InputNumber,
+    NotificationBox,
+    Progress,
+    Select,
+    Text,
+    VideoThumbnail,
+)
 
 import src.globals as g
 import src.ui.input as input
@@ -28,25 +34,25 @@ select_frame_type = Select(items=limits_types)
 frame_flex = Flexbox([select_frame_type, input_frames, input_frames_percents])
 frames_field = Field(
     content=frame_flex,
-    title="Sample frame count",
-    description="Enter a number or percentage if you want to get a sample",
+    title="Sample frames count",
+    description="Select sample settings. 'Percents' option sample N% of frames of the video. 'Frames' option sample N frames of the video",
 )
 
 input_fps = InputNumber(value=4, min=0.1, max=30)
-fps_field = Field(content=input_fps, title="fps", description="Set the number of frames per second")
+fps_field = Field(
+    content=input_fps,
+    title="FPS",
+    description="Set the number of frames per second (min value: 1, max value: 30)",
+)
 
-is_random = Checkbox(content="")
+is_random = Checkbox(content="Enable")
 random_field = Field(
     content=is_random,
     title="Random order of frames",
-    description="Enable checkbox if you want to get a random frames",
+    description="Enable checkbox if you want to get a random frames. If disabled get frames in sequential order",
 )
 
-render_settings = Field(
-    content=Container([frames_field, random_field, fps_field]),
-    title="Render Settings",
-    description="Configuring the resulting video",
-)
+render_settings = Container([frames_field, random_field, fps_field])
 
 input_project_name = Input(placeholder="Enter the project name")
 name_field = Field(
@@ -56,6 +62,7 @@ name_field = Field(
 )
 
 button_render = Button(text="Start render")
+render_loading = False
 
 settings_container = Container([render_settings, name_field, button_render])
 
@@ -63,7 +70,7 @@ settings_container = Container([render_settings, name_field, button_render])
 ds_progress = Progress()
 render_progress = Progress()
 
-info_success = NotificationBox(title="Results uploaded to new project", box_type="success")
+info_success = Text(text="Results uploaded to new project", status="success")
 info_success.hide()
 
 output_video = VideoThumbnail()
@@ -71,8 +78,8 @@ output_video.hide()
 
 
 result_card = Card(
-    title="Render video",
-    description="4️⃣👇 Create new project and start rendering the video",
+    title="Render Settings",
+    description="4️⃣ Configure the resulting video",
     content=Container(
         [settings_container, render_progress, ds_progress, info_success, output_video]
     ),
@@ -93,45 +100,60 @@ def show_frames_input(value):
 
 @button_render.click
 def create_project_and_upload_videos():
-    input.add_project_button.disable()
-    input.table_card.lock()
-    select_frame_type.disable()
-    input_frames_percents.disable()
-    input_frames.disable()
-    info_success.hide()
-    output_video.hide()
+    if input.table.loading:
+        sly.app.show_dialog(
+            title="Loading...",
+            description="Please wait until the end before starting rendering.",
+            status="error",
+        )
+        return
 
     project_name = input_project_name.get_value()
-    fps = input_fps.get_value()
-    frames_count = get_frames_count()
-    opacity = input.input_opacity.get_value()
-    thickness = input.input_border.get_value()
-    random = is_random.is_checked()
-
-    input_project_name.disable()
     if project_name == "":
         sly.app.show_dialog(
             title="Enter project name please",
             description="Please enter name to create a new project",
             status="error",
         )
-        input_project_name.enable()
-    else:
-        details = (fps, opacity, thickness)
-        video_info, _ = start_render_and_upload_to_new_project(
-            project_name, details, frames_count, random
-        )
-        input_project_name.set_value("")
-        info_success.show()
-        output_video.set_video_id(video_info.id)
-        output_video.show()
-        input_project_name.enable()
-        input.table_card.unlock()
+        return
+    global render_loading
+
+    render_loading = True
+    input_project_name.disable()
+    button_render.disable()
+    input.add_project_button.disable()
+    input.table_card.lock()
+    select_frame_type.disable()
+    input_frames_percents.disable()
+    input_frames.disable()
+    input_fps.disable()
+    info_success.hide()
+    output_video.hide()
+
+    fps = input_fps.get_value()
+    frames_count = get_frames_count()
+    opacity = input.input_opacity.get_value()
+    thickness = input.input_border.get_value()
+    random = is_random.is_checked()
+
+    details = (fps, opacity, thickness)
+    video_info, _ = start_render_and_upload_to_new_project(
+        project_name, details, frames_count, random
+    )
+    input_project_name.set_value("")
+    info_success.show()
+    output_video.set_video_id(video_info.id)
+    output_video.show()
+
+    render_loading = False
+    select_frame_type.enable()
     input_frames_percents.enable()
     input_frames.enable()
-
-    select_frame_type.enable()
+    input_fps.enable()
+    input.table_card.unlock()
     input.add_project_button.enable()
+    input_project_name.enable()
+    button_render.enable()
 
 
 def get_frames_count():
@@ -250,43 +272,6 @@ def create_frame(ds_name, img, f_img_shape, grid_size, all_projects, opacity, th
     return frame
 
 
-def save_preview_image(api: sly.Api, frame, img_name):
-    DATA_DIR = sly.app.get_data_dir()
-    local_path = os.path.join(DATA_DIR, img_name)
-    remote_path = os.path.join("", img_name)
-    sly.image.write(local_path, frame)
-    if api.file.exists(g.TEAM_ID.id, remote_path):
-        api.file.remove(g.TEAM_ID.id, remote_path)
-    file_info = api.file.upload(g.TEAM_ID.id, local_path, remote_path)
-    return file_info
-
-
-def preview_frame(deatails):
-    opacity, thickness = deatails
-    all_projects = g.src_projects_data.values()
-    projects_count = len(all_projects)
-    f_project = next(iter(all_projects))  # choose first project
-    f_dataset = next(iter(f_project["datasets"].values()))  # choose first dataset
-    if f_dataset is None:
-        f_project = next(iter(all_projects))  # choose next project
-        f_dataset = next(iter(f_project["datasets"].values()))
-    f_img_info = next(iter(f_dataset["images"].values()))  # choose first image
-    if f_img_info is None:
-        f_dataset = next(iter(f_project["datasets"].values()))  # choose next dataset
-        f_img_info = next(iter(f_dataset["images"].values()))
-    f_img_shape = (f_img_info.height, f_img_info.width, 3)  # choose image size for preview
-
-    ds_name = f_dataset["info"].name
-    img_name = f_img_info.name
-    grid_size = get_grid_size(projects_count)
-    img = (img_name, f_img_info)
-    frame = create_frame(ds_name, img, f_img_shape, grid_size, all_projects, opacity, thickness)
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-    file_info = save_preview_image(g.api, frame, img_name)
-    return file_info
-
-
 def create_video_for_dataset(
     dataset, ds_name, ds_path, all_projects, details, frames_count, is_random
 ):
@@ -383,9 +368,7 @@ def start_render_and_upload_to_new_project(project_name, datails, frames_count, 
             video_info = upload_video(dataset_id, g.api, ds_path)
 
             pbar.update(1)
-
-            # rmtree(ds_path)  # clean direcroty with uploaded video
             sly.fs.remove_dir(ds_path)  # clean direcroty with uploaded video
-    # rmtree(DATA_DIR)  # clean temp directories
-    sly.fs.clean_dir(DATA_DIR)
+
+    sly.fs.clean_dir(DATA_DIR)  # clean temp directories
     return video_info, project_id
