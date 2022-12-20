@@ -38,7 +38,7 @@ frames_field = Field(
     description="Select sample settings. 'Percents' option sample N% of frames of the video. 'Frames' option sample N frames of the video",
 )
 
-input_fps = InputNumber(value=4, min=0.1, max=30)
+input_fps = InputNumber(value=4, min=1, max=30)
 fps_field = Field(
     content=input_fps,
     title="FPS",
