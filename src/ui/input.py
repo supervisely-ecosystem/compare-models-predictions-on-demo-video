@@ -38,7 +38,7 @@ table_card = Card(
 table_card.lock()
 
 preview_image = Image()
-refresh_button = Button(text="Refresh preview", icon="zmdi zmdi-refresh")
+refresh_button = Button(text="Random frame preview", icon="zmdi zmdi-refresh")
 preview_loading = False
 
 input_opacity = InputNumber(value=40, min=0, max=100)
@@ -51,7 +51,7 @@ preview_settings = Flexbox([opacity_field, border_field])
 
 preview_card = Card(
     title="Image preview",
-    description="3️⃣ Preview video`s frame",
+    description="3️⃣ Preview video frame",
     content=Container([preview_settings, refresh_button, preview_image]),
     lock_message="Add projects to unlock",
 )
