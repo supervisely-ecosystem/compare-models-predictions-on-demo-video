@@ -4,8 +4,9 @@
   "name": "Render video to compare projects",
   "description": "Put images with labels into collage and renders comparison videos",
   "categories": ["images", "videos", "data operations", "visualization"],
-  "icon": "https://user-images.githubusercontent.com/93247833/208674617-5f3751ea-4321-437f-9f90-b4a590df1172.png",
+  "icon": "https://user-images.githubusercontent.com/115161827/208976571-91be8616-75b5-4b6d-8e69-dc81f653752c.png",
   "poster": "https://user-images.githubusercontent.com/93247833/208673169-f6546d31-03b0-47e7-87fa-ef6f90770bfa.png",
+  "icon_cover": true,
   "entrypoint": "python -m uvicorn src.main:app --host 0.0.0.0 --port 8000",
   "port": 8000,
   "context_menu": {
