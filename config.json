@@ -5,7 +5,7 @@
   "description": "Put images with labels into collage and renders comparison videos",
   "categories": ["images", "videos", "data operations", "visualization"],
   "icon": "https://user-images.githubusercontent.com/115161827/208976571-91be8616-75b5-4b6d-8e69-dc81f653752c.png",
-  "poster": "https://user-images.githubusercontent.com/115161827/208976269-ad727ea8-78d5-49f9-8da0-3b4d0b34bf1a.png",
+  "poster": "https://user-images.githubusercontent.com/115161827/208976269-ad727ea8-78d5-49f9-8da0-3b4d0b34bf1a.png?v=1",
   "icon_cover": true,
   "entrypoint": "python -m uvicorn src.main:app --host 0.0.0.0 --port 8000",
   "port": 8000,
