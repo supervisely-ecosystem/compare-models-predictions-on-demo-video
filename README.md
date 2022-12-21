@@ -18,29 +18,21 @@
 
 # Overview
 
-This app takes *images* projects you need and compiles a videos from those images comparing model predictions. The app also could take as many images projects as you need and has flexible render settings allowing for a better tune-up.
-
+App combines same images (including annotations) from different projects into collage and renders presentation videos. It can be used to visualize and compare predictions from different neural networks with ground truth or to compare labels from different annotators.
 
 # How to Run
 
-1. Go to your Workspace
+0. Go to your Workspace
 
-<img src="https://user-images.githubusercontent.com/115161827/208959143-d837f479-937e-4382-8672-bef12adf088c.png">
+1. Open the context menu and run the app
 
-2. Right click to the project and run app from context menu
+<img src="https://user-images.githubusercontent.com/115161827/208979315-945909b2-816c-41c5-8213-cda30cc4cee1.png">
 
-<img src="https://user-images.githubusercontent.com/115161827/208959164-a690b9c1-dfd7-4a71-81f2-ed4de73c09cd.png">
+2. Select the projects you need to compare
 
-3. Select all the projects you need to compare
+3. Set up render settings to your needs and click `Start render`
 
-<img src="https://user-images.githubusercontent.com/115161827/208959189-dcaecc5c-8636-4f11-9f48-1521a4b36d03.png">
+## Screenshot
 
-4. Set up render settings to your needs and click *Start render*
+<img src="https://user-images.githubusercontent.com/115161827/208979116-c9525890-6aff-4a59-a8f9-b3c31d39515f.png">
 
-<img src="https://user-images.githubusercontent.com/115161827/208959211-fa00322e-b8a2-4165-aaa3-96b77bdeef90.png">
-
-## Result
-
-As a result of running this app, you will have a new project that contains the video you just rendered
-
-<img src="https://user-images.githubusercontent.com/115161827/208959174-525181e6-7693-4981-b6b6-b35946fc969f.png">
