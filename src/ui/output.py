@@ -319,9 +319,9 @@ def create_project(project_name, api):
     return project.id
 
 
-def create_dataset(project_id, api):
+def create_dataset(project_id, api, ds_name):
     dataset = api.dataset.create(
-        project_id, name="compare NN predictions", change_name_if_conflict=True
+        project_id, name=ds_name, change_name_if_conflict=True
     )
     print(f"New dataset has been sucessfully created (id={dataset.id})")
     return dataset.id
@@ -359,7 +359,7 @@ def start_render_and_upload_to_new_project(project_name, datails, frames_count, 
             create_video_for_dataset(
                 dataset, ds_name, ds_path, all_projects, datails, frames_count, random
             )
-            dataset_id = create_dataset(project_id, g.api)
+            dataset_id = create_dataset(project_id, g.api, ds_name)
             info_current.hide()
             video_info = upload_video(dataset_id, g.api, ds_path)
 
