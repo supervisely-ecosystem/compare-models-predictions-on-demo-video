@@ -22,9 +22,9 @@ App combines same images (including annotations) from different projects into co
 
 # How to Run
 
-0. Go to your Workspace
+0. Go to the list of projects in your Workspace
 
-1. Open the context menu and run the app
+1. Open the context menu of a project and run the app
 
 <img src="https://user-images.githubusercontent.com/115161827/208979315-945909b2-816c-41c5-8213-cda30cc4cee1.png">
 
@@ -32,7 +32,9 @@ App combines same images (including annotations) from different projects into co
 
 3. Set up render settings to your needs and click `Start render`
 
+4. As a result a new project will be generated. You can download entire project from context menu or a specific video directly from video labeling tool 
+
 ## Screenshot
 
-<img src="https://user-images.githubusercontent.com/115161827/208979116-c9525890-6aff-4a59-a8f9-b3c31d39515f.png">
+<img src="https://user-images.githubusercontent.com/115161827/208985953-15f8e7a3-c143-4ffb-ac53-cbe3695de07c.png">
 
