@@ -210,7 +210,7 @@ def preview_frame(deatails):
     all_projects = g.src_projects_data.values()
     projects_count = len(all_projects)
     f_project = next(iter(all_projects))  # choose first project
-    f_dataset = next(iter(f_project["datasets"].values()))  # choose first dataset
+    f_dataset = random.choice(list(f_project["datasets"].values())) # choose first dataset
     if f_dataset is None:
         f_project = next(iter(all_projects))  # choose next project
         f_dataset = next(iter(f_project["datasets"].values()))
