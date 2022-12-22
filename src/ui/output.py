@@ -278,7 +278,7 @@ def create_video_for_dataset(
 
     # create new videowriter for current dataset
     videopath = ds_path + f"/{ds_name}.mp4"
-    fourcc = cv2.VideoWriter_fourcc(*"MP4V")
+    fourcc = cv2.VideoWriter_fourcc(*"VP90")
     height, width = f_img_shape[:2]
     grid = get_grid_size(len(all_projects))
     (rows, cols) = grid
@@ -309,28 +309,27 @@ def create_video_for_dataset(
 
     video_writer.release()
 
+    return videopath
 
-def create_project(project_name, api):
+
+def create_project(project_name):
     # create new project and dataset
-    project = api.project.create(
+    project = g.api.project.create(
         g.WORKSPACE_ID, project_name, sly.ProjectType.VIDEOS, change_name_if_conflict=True
     )
     print(f"New project has been sucessfully created (id={project.id})")
     return project.id
 
 
-def create_dataset(project_id, api, ds_name):
-    dataset = api.dataset.create(
-        project_id, name=ds_name, change_name_if_conflict=True
-    )
+def create_dataset(project_id, ds_name):
+    dataset = g.api.dataset.create(project_id, name=ds_name, change_name_if_conflict=True)
     print(f"New dataset has been sucessfully created (id={dataset.id})")
     return dataset.id
 
 
-def upload_video(dataset_id, api, path):
+def upload_video(dataset_id, path):
     #  upload result video
-    video_path = glob.glob(path + r"/*.mp4")[0]
-    video_info = api.video.upload_path(dataset_id, name="Video", path=video_path)
+    video_info = g.api.video.upload_path(dataset_id, name="Video", path=path)
     print(f"Result video (id={video_info[0]}) uploaded to the current dataset (id={dataset_id})")
 
     return video_info
@@ -342,7 +341,7 @@ def start_render_and_upload_to_new_project(project_name, datails, frames_count, 
     all_projects = g.src_projects_data.values()
     f_project = next(iter(all_projects))  # take the first project for iterations
 
-    project_id = create_project(project_name, g.api)
+    project_id = create_project(project_name)
 
     with render_progress(message="processing datasets", total=len(f_project["datasets"])) as pbar:
         for ds_name, dataset in f_project["datasets"].items():
@@ -356,12 +355,12 @@ def start_render_and_upload_to_new_project(project_name, datails, frames_count, 
             if ds_name not in os.listdir(DATA_DIR):
                 os.mkdir(ds_path)
 
-            create_video_for_dataset(
+            videopath = create_video_for_dataset(
                 dataset, ds_name, ds_path, all_projects, datails, frames_count, random
             )
-            dataset_id = create_dataset(project_id, g.api, ds_name)
+            dataset_id = create_dataset(project_id, ds_name)
             info_current.hide()
-            video_info = upload_video(dataset_id, g.api, ds_path)
+            video_info = upload_video(dataset_id, videopath)
 
             output_video.set_video_id(video_info.id)
             output_video.show()
