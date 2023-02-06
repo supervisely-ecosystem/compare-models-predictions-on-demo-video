@@ -329,7 +329,8 @@ def create_dataset(project_id, ds_name):
 
 def upload_video(dataset_id, path):
     #  upload result video
-    video_info = g.api.video.upload_path(dataset_id, name="Video", path=path)
+    name = os.path.basename(path)
+    video_info = g.api.video.upload_path(dataset_id, name=name, path=path)
     print(f"Result video (id={video_info[0]}) uploaded to the current dataset (id={dataset_id})")
 
     return video_info
