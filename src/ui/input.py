@@ -154,6 +154,7 @@ def refresh_preview():
 
 
 def collect_project_data(id):
+    id = 23923
     project_info = g.api.project.get_info_by_id(id)
     with input_progress(message="collecting data...", total=project_info.images_count) as pbar:
         meta_json = g.api.project.get_meta(id)
