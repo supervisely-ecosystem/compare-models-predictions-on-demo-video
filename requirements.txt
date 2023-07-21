@@ -1,0 +1,4 @@
+git+https://github.com/supervisely/supervisely.git@fix-traceback-logging
+
+# code formatter
+black
