@@ -46,7 +46,7 @@ test_card = Card(
     title="Predictions Gallery",
     content=Container([predictions_gallery, btn_container]),
 )
-
+prediction_num = 0
 
 @set_three.click
 def set_btn_click_handler():
