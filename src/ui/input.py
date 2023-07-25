@@ -92,7 +92,7 @@ input_progress = Progress()
 start_card = Card(
     title="Select projects",
     description="1️⃣ Add projects to the table",
-    content=Container([test_card, select_project, add_project_button, input_progress]),
+    content=Container([select_project, add_project_button, input_progress]),
 )
 
 # 2,3  explore info and preview example frame of future videos
