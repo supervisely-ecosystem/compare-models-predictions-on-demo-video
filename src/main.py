@@ -8,6 +8,6 @@ from src.ui.input import test_card
 
 
 # layout = Container(widgets=[input.start_card, input.info, output.result_card], gap=15)
-layout = Container(widgets=[input.test_card])
+layout = Container(widgets=[test_card])
 
 app = sly.Application(layout=layout)
