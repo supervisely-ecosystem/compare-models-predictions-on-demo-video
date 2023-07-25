@@ -6,13 +6,81 @@ import pandas as pd
 import random
 import supervisely as sly
 from supervisely.app.widgets import Button, Card, Container, Field, Flexbox, Image
-from supervisely.app.widgets import InputNumber, Progress, SelectProject, Table
+from supervisely.app.widgets import InputNumber, Progress, SelectProject, Table, PredictionsGallery
 from supervisely.project.project_type import ProjectType
 
 
 import src.globals as g
 import src.ui.output as output
 
+test_project_id=24504
+test_dataset_id=71104
+test_project_meta = sly.ProjectMeta.from_json(data=g.api.project.get_meta(id=test_project_id))
+
+images_infos = g.api.image.get_list(dataset_id=test_dataset_id)
+images_infos = sorted(images_infos, key=lambda image_info: image_info.name)
+image_urls = [image_info.full_storage_url for image_info in images_infos]
+image_ids = [image_info.id for image_info in images_infos]
+
+titles = [image_info.name for image_info in images_infos]
+
+anns_json = g.api.annotation.download_json_batch(dataset_id=test_dataset_id, image_ids=image_ids)
+anns = [sly.Annotation.from_json(ann_json, test_project_meta) for ann_json in anns_json]
+
+ground_truth_ann = anns[0]
+ground_truth_url = image_urls[0]
+anns_generator = (ann for ann in anns)
+
+predictions_gallery = PredictionsGallery()
+
+predictions_gallery.set_ground_truth(
+    image_url=ground_truth_url,
+    annotation=ground_truth_ann,
+    title="Ground truth",
+)
+set_three = Button(text="add 3 predictions")
+set_one = Button(text="add 1 prediction")
+btn_container = Flexbox([set_three, set_one])
+
+test_card = Card(
+    title="Predictions Gallery",
+    content=Container([predictions_gallery, btn_container]),
+)
+
+
+@set_three.click
+def set_btn_click_handler():
+    global prediction_num
+    predictions = []
+    titles = []
+
+    def _get_next_prediction(predictions, prediction_num):
+        try:
+            next_ann = next(anns_generator)
+            predictions.append(next_ann)
+            prediction_num += 1
+            titles.append(f"Predictions {prediction_num} [treshold=0.5]")
+            return prediction_num
+        except StopIteration:
+            pass
+
+    prediction_num = _get_next_prediction(predictions, prediction_num)
+    prediction_num = _get_next_prediction(predictions, prediction_num)
+    prediction_num = _get_next_prediction(predictions, prediction_num)
+
+    if len(predictions) > 0:
+        predictions_gallery.add_predictions(annotations=predictions, titles=titles)
+
+
+@set_one.click
+def set_btn_click_handler():
+    global prediction_num
+    try:
+        next_ann = next(anns_generator)
+        prediction_num += 1
+        predictions_gallery.add_prediction(next_ann, f"Predictions {prediction_num} [treshold=0.5]")
+    except StopIteration:
+        pass
 
 # 1 input info
 select_project = SelectProject(
@@ -24,7 +92,7 @@ input_progress = Progress()
 start_card = Card(
     title="Select projects",
     description="1️⃣ Add projects to the table",
-    content=Container([select_project, add_project_button, input_progress]),
+    content=Container([test_card, select_project, add_project_button, input_progress]),
 )
 
 # 2,3  explore info and preview example frame of future videos
@@ -154,7 +222,7 @@ def refresh_preview():
 
 
 def collect_project_data(id):
-    id = 23923
+    id = 254750
     project_info = g.api.project.get_info_by_id(id)
     with input_progress(message="collecting data...", total=project_info.images_count) as pbar:
         meta_json = g.api.project.get_meta(id)
@@ -164,7 +232,7 @@ def collect_project_data(id):
         # get project`s all datasets
         project_datasets = g.api.dataset.get_list(id)
         g.src_projects_data[id]["datasets"] = defaultdict()
-        
+
         for ds in project_datasets:
             # get dataset`s all imageInfos
             ds_images = g.api.image.get_list(ds.id)
@@ -211,7 +279,7 @@ def preview_frame(deatails):
     all_projects = g.src_projects_data.values()
     projects_count = len(all_projects)
     f_project = next(iter(all_projects))  # choose first project
-    f_dataset = random.choice(list(f_project["datasets"].values())) # choose first dataset
+    f_dataset = random.choice(list(f_project["datasets"].values()))  # choose first dataset
     if f_dataset is None:
         f_project = next(iter(all_projects))  # choose next project
         f_dataset = next(iter(f_project["datasets"].values()))
