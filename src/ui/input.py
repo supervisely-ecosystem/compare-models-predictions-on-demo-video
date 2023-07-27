@@ -103,6 +103,7 @@ def remove_project(datapoint: Table.ClickedDataPoint):
             status="error",
         )
         return
+    raise Exception("test")
     table.loading = True
     refresh_button.disable()
     output.button_render.disable()

@@ -10,4 +10,3 @@ import src.ui.output as output
 layout = Container(widgets=[input.start_card, input.info, output.result_card], gap=15)
 
 app = sly.Application(layout=layout)
-raise Exception("test")
