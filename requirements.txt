@@ -1,4 +1,4 @@
-git+https://github.com/supervisely/supervisely.git@widget-PredictionsGallery
+git+https://github.com/supervisely/supervisely.git@high-level-exception-handling
 
 # code formatter
 black
