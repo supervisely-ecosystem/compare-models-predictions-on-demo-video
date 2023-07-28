@@ -2,7 +2,7 @@
     "type": "app",
     "version": "2.0.0",
     "name": "Render video to compare projects",
-    "docker_image": "supervisely/visualization-stats:0.0.1",
+    "docker_image": "supervisely/data-operations:0.0.3",
     "description": "Put images with labels into collage and renders comparison videos",
     "categories": [
         "images",
