@@ -65,7 +65,7 @@ right_urls_generator = (url for url in static_paths)
 left_anns_generator = (ann for ann in anns)
 right_anns_generator = (ann for ann in anns)
 
-image_pairs_sequence = ImagePairsSequence()
+image_pairs_sequence = ImagePairsSequence(static_dir=static_dir)
 
 
 text = Text()
