@@ -20,7 +20,7 @@ max_frames = 0
 
 
 project_id = sly.env.project_id()
-dataset_id = sly.env.dataset_id()
+dataset_id = 71201
 project_meta = sly.ProjectMeta.from_json(data=api.project.get_meta(id=project_id))
 
 data_dir = sly.app.get_data_dir()
