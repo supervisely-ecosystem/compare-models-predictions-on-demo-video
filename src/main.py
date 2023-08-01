@@ -11,9 +11,9 @@ load_dotenv("local.env")
 load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 api = sly.Api()
-static_dir = os.path.join(g.data_dir, "static")
-if not os.path.exists(static_dir):
-    os.makedirs(static_dir)
+# static_dir = os.path.join(g.data_dir, "static")
+# if not os.path.exists(static_dir):
+#     os.makedirs(static_dir)
 
 # create buttons to add predictions
 left_btn = Button(text="add 1 prediction to left")
@@ -47,21 +47,22 @@ images_infos = api.image.get_list(dataset_id=g.dataset_id)
 images_infos = sorted(images_infos, key=lambda image_info: image_info.name)
 names = [image_info.name for image_info in images_infos]
 image_ids = [image_info.id for image_info in images_infos]
-paths = [
-    os.path.join(static_dir, sly.generate_free_name(names, image_info.name, with_ext=True))
-    for image_info in images_infos
-]
-static_paths = [os.path.join("static", os.path.basename(path)) for path in paths]
+# paths = [
+#     os.path.join(static_dir, sly.generate_free_name(names, image_info.name, with_ext=True))
+#     for image_info in images_infos
+# ]
+# static_paths = [os.path.join("static", os.path.basename(path)) for path in paths]
 
-g.api.image.download_paths(g.dataset_id, image_ids, paths)
+# g.api.image.download_paths(g.dataset_id, image_ids, paths)
+urls = [img.full_storage_url for img in images_infos]
 
 
 # get annotations for all images
 anns_json = api.annotation.download_json_batch(dataset_id=g.dataset_id, image_ids=image_ids)
 anns = [sly.Annotation.from_json(ann_json, g.project_meta) for ann_json in anns_json]
 
-left_urls_generator = (url for url in static_paths)
-right_urls_generator = (url for url in static_paths)
+left_urls_generator = (url for url in urls)
+right_urls_generator = (url for url in urls)
 left_anns_generator = (ann for ann in anns)
 right_anns_generator = (ann for ann in anns)
 
@@ -78,7 +79,7 @@ card = Card(
 layout = Container(widgets=[btn_container, card, text])
 
 
-app = sly.Application(layout=layout, static_dir=static_dir)
+app = sly.Application(layout=layout)
 
 left_num = 0
 right_num = 0
