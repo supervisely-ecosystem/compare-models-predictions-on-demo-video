@@ -155,7 +155,7 @@ def left_three_btn_click_handler():
 
     if len(data) > 0:
         urls, anns, titles = zip(*data)
-        image_pairs_sequence.extend_left(urls=urls, anns=anns, titles=titles)
+        image_pairs_sequence.extend_left(paths=urls, anns=anns, titles=titles)
 
 
 @right_three_btn.click
@@ -170,7 +170,7 @@ def right_three_btn_click_handler():
 
     if len(data) > 0:
         urls, anns, titles = zip(*data)
-        image_pairs_sequence.extend_right(urls=urls, anns=anns, titles=titles)
+        image_pairs_sequence.extend_right(paths=urls, anns=anns, titles=titles)
 
 
 @clean_btn.click
