@@ -2,7 +2,7 @@ import os
 
 import supervisely as sly
 from dotenv import load_dotenv
-from supervisely.app.widgets import Button, Card, Container, Flexbox, ImagePairsSequence, Text
+from supervisely.app.widgets import Button, Card, Container, Flexbox, ImagePairSequence, Text
 
 from . import globals as g
 
@@ -64,7 +64,7 @@ right_urls_generator = (url for url in static_paths)
 left_anns_generator = (ann for ann in anns)
 right_anns_generator = (ann for ann in anns)
 
-image_pairs_sequence = ImagePairsSequence()
+image_pairs_sequence = ImagePairSequence()
 
 
 text = Text()
