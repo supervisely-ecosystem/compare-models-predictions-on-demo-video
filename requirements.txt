@@ -1,4 +1,4 @@
-git+https://github.com/supervisely/supervisely.git@fix-image-pair-sequnce-local-anns
+git+https://github.com/supervisely/supervisely.git
 
 # code formatter
 black
