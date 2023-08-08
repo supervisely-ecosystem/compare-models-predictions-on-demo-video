@@ -59,8 +59,8 @@ urls = [img.full_storage_url for img in images_infos]
 anns_json = api.annotation.download_json_batch(dataset_id=g.dataset_id, image_ids=image_ids)
 anns = [sly.Annotation.from_json(ann_json, g.project_meta) for ann_json in anns_json]
 
-left_urls_generator = (url for url in urls)
-right_urls_generator = (url for url in urls)
+left_urls_generator = (url for url in static_paths)
+right_urls_generator = (url for url in static_paths)
 left_anns_generator = (ann for ann in anns)
 right_anns_generator = (ann for ann in anns)
 
@@ -77,7 +77,7 @@ card = Card(
 layout = Container(widgets=[btn_container, card, text])
 
 
-app = sly.Application(layout=layout)
+app = sly.Application(layout=layout, static_dir=static_dir)
 
 left_num = 0
 right_num = 0
