@@ -1,5 +1,6 @@
 {
     "type": "app",
+    "instance_version": "6.15.60",
     "version": "2.0.0",
     "name": "Render video to compare projects",
     "docker_image": "supervisely/visualization-stats:6.73.564",
